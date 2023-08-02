@@ -1,0 +1,46 @@
+---
+trigger:
+  - develop
+
+stages:
+  - stage: Buildspc
+    displayName: Build for spc
+    jobs:
+      - job: Buildjob
+        displayName: Build job for spc
+        pool: Default
+        steps:
+          - task: Maven@3
+            inputs:
+              mavenPOMFile: 'pom.xml'
+              publishJUnitResults: true
+              testResultsFiles: '**/surefire-reports/TEST-*.xml'
+              javaHomeOption: 'path'
+              jdkVersionOption: '1.17'
+              jdkDirectory: /usr/lib/jvm/java-17-openjdk-amd64  
+              mavenVersionOption: 'Path'
+              mavenDirectory: '/usr/share/maven/apache-maven-3.9.3'
+              goals: 'package'
+
+          - task: CopyFiles@2
+            inputs:
+              Contents: '**/target/spring-petclinic-2.7.3.jar'
+              TargetFolder: $(Build.ArtifactStagingDirectory)
+          - task:  PublishBuildArtifacts@1
+            inputs:
+              pathToPublish: '$(Build.ArtifactStagingDirectory)'
+              ArtifactName: 'spc'
+              publishLocation: 'Container'
+
+          - task: Maven@3
+            inputs:
+              mavenPomFile: 'pom.xml'
+              javaHomeOption: 'path'
+              jdkVersionOption: '1.17'
+              jdkDirectory: /usr/lib/jvm/java-17-openjdk-amd64
+              mavenVersionOption: 'Path'
+              mavenDirectory: '/usr/share/maven/apache-maven-3.9.3'
+              mavenAuthenticateFeed: true
+              publishJUnitResults: true
+              testResultsFiles: '**/surefire-reports/TEST-*.xml'
+              goals: 'deploy'
